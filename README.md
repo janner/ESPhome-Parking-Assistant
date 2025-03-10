@@ -1,7 +1,11 @@
 # ESPhome-Parking-Assistant
 ESPhome parking assistant with ESP32-C6, HC-SR04 ultrasonic sensor and WS2818 led strip
 
-I wanted to create a visual parking assistant that uses an ultrasonic sensor to measure the distance from the garage wall the the car and a led strip to visualize it. I used ESPhome's on_value_range trigger to create four distance ranges with corresponding light.turn_on trigger efects. In normal situation the ultrasonic sensor measures the distance every 60 s, but I also created a binary sensor and an automation to turn on "high speed" measuring, every 500 ms, when the garade door or PIR sensor is triggered. This worked well enough for me altough I would have preferred a system that would be achieve this without connection to HA.
+I wanted to create a visual parking assistant that uses an ultrasonic sensor to measure the distance between the garage wall and the car and an LED strip to visualize it. I used ESPHome's `on_value_range` trigger to define four distance ranges with corresponding `light.turn_on `trigger effects.
+
+Under normal conditions, the ultrasonic sensor measures the distance every 60 seconds. However, I also created a binary sensor and an automation to enable "high-speed" measurement—every 500 milliseconds—when the garage door or PIR sensor is triggered.
+
+This setup worked well enough for me, although I don’t like that it depends on the connection to Home Assistant.
 
 ## Getting started
 
