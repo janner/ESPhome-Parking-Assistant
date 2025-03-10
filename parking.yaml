@@ -1,0 +1,192 @@
+esphome:
+  name: parkingassistant
+
+esp32:
+  board: esp32-c6-devkitm-1
+  variant: esp32c6
+  framework:
+    type: esp-idf
+    version: 5.2.1
+    platform_version: 6.7.0
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "XXX"
+
+ota:
+  - platform: esphome
+    password: "XXX"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Parking Assistant Fallback Hotspot"
+    password: "XXX"
+
+captive_portal:
+
+# Using lambda calls to re-setup the ultrasonic sensor with faster or slower update interval
+binary_sensor: 
+  - platform: homeassistant
+    id: high_speed_update
+    entity_id: input_boolean.high_speed_update
+    on_press:
+      then:
+        - light.turn_on: garage_distancelight
+        - logger.log: "Light on"
+        - lambda: !lambda |-
+            id(garage_distancesensor).set_update_interval(500);
+            id(garage_distancesensor).call_setup();
+    on_release:
+      then:
+        - light.turn_off: garage_distancelight
+        - logger.log: "Light off"
+        - lambda: !lambda |-
+            id(garage_distancesensor).set_update_interval(60000);
+            id(garage_distancesensor).call_setup();
+
+sensor:
+  - platform: ultrasonic
+    trigger_pin: GPIO0
+    echo_pin: GPIO1
+    id: garage_distancesensor
+    name: "Garage Distance Sensor"
+    update_interval: 60s
+    filters:
+      - filter_out: nan
+    on_value_range:
+      - below: 1.5
+        above: 0.72
+        then:
+          if:
+            condition:
+              binary_sensor.is_on: high_speed_update
+            then:
+              - light.turn_on:
+                  id: garage_distancelight
+                  effect: strobe_1
+              - logger.log: "strobe_2"
+      - below: 0.72
+        above: 0.5
+        then:
+          if:
+            condition:
+              binary_sensor.is_on: high_speed_update
+            then:
+              - light.turn_on:
+                  id: garage_distancelight
+                  effect: strobe_2
+              - logger.log: "strobe_1"
+      - below: 0.5
+        above: 0.32
+        then:
+          if:
+            condition:
+              binary_sensor.is_on: high_speed_update
+            then:
+              - light.turn_on:
+                  id: garage_distancelight
+                  effect: strobe_3
+              - logger.log: "strobe_3"
+      - below: 0.32
+        above: 0.01
+        then:
+          if:
+            condition:
+              binary_sensor.is_on: high_speed_update
+            then:
+              - light.turn_on:
+                  id: garage_distancelight
+                  effect: strobe_4
+              - logger.log: "strobe_4"
+      - above: 1.5
+        then:
+          - light.turn_off: garage_distancelight
+          - logger.log: "Light off"
+
+# Only this light platform is available to esp-idf, so change accordingly to your board
+light:
+  - platform: esp32_rmt_led_strip
+    rgb_order: GRB
+    pin: GPIO3
+    num_leds: 8
+    chipset: ws2812
+    name: "Garage Distance Light"
+    id: garage_distancelight
+    effects:
+      - strobe:
+      - strobe:
+          name: strobe_1
+          colors:
+            - state: true
+              brightness: 100%
+              red: 0%
+              green: 0%
+              blue: 100%
+              duration: 500ms
+            - state: false
+              duration: 250ms
+            - state: true
+              brightness: 100%
+              red: 0%
+              green: 0%
+              blue: 100%
+              duration: 500ms
+      - strobe:
+          name: strobe_2
+          colors:
+            - state: true
+              brightness: 100%
+              red: 0%
+              green: 100%
+              blue: 0%
+              duration: 500ms
+            - state: false
+              duration: 250ms
+            - state: true
+              brightness: 100%
+              red: 0%
+              green: 100%
+              blue: 0%
+              duration: 500ms
+      - strobe:
+          name: strobe_3
+          colors:
+            - state: true
+              brightness: 100%
+              red: 100%
+              green: 100%
+              blue: 0%
+              duration: 500ms
+            - state: false
+              duration: 250ms
+            - state: true
+              brightness: 100%
+              red: 100%
+              green: 100%
+              blue: 0%
+              duration: 500ms
+      - strobe:
+          name: strobe_4
+          colors:
+            - state: true
+              brightness: 100%
+              red: 100%
+              green: 0%
+              blue: 0%
+              duration: 200ms
+            - state: false
+              duration: 100ms
+            - state: true
+              brightness: 100%
+              red: 100%
+              green: 0%
+              blue: 0%
+              duration: 200ms
