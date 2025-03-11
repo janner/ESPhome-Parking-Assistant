@@ -1,4 +1,4 @@
-# ESPhome-Parking-Assistant
+# ESPhome Parking Assistant
 ESPhome parking assistant with ESP32-C6, HC-SR04 ultrasonic sensor and WS2818 led strip
 
 I wanted to create a visual parking assistant that uses an ultrasonic sensor to measure the distance between the garage wall and the car and an LED strip to visualize it. I used ESPHome's `on_value_range` trigger to define four distance ranges with corresponding `light.turn_on `trigger effects.
